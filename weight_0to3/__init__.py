@@ -3,7 +3,7 @@ import PIL
 import os
 
 
-def baby_weight_calc(user_age, user_weight):
+def under3_weight_calc(user_age, user_weight):
 
     im = PIL.Image.open(os.path.dirname(__file__) +
                         '/courbe-poids-0a3ans-1.jpeg')
