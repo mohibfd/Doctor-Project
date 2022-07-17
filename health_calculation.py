@@ -1,19 +1,14 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QButtonGroup, QVBoxLayout
-from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QApplication, QWidget
 from PyQt6 import uic
-from bmi import bmi_calc
-from weight_0to3 import under3_weight_calc
-from height_weight_male import male_height_weight_calc
-from height_0to3 import under3_height_calc
+from calculations import bmi_calc, under3_weight_calc, under3_height_calc, male_height_weight_calc, female_height_weight_calc
 
 
 class myApp(QWidget):
     def __init__(self):
         super().__init__()
-        uic.loadUi("gui.ui", self)
+        uic.loadUi("calculations/gui.ui", self)
         self.setWindowTitle("Doctor Randa\'s App")
-        # self.setWindowIcon(QIcon("temp.png"))
 
         self.bmiButton.clicked.connect(self.calculate_bmi)
         self.weightAgeButton.clicked.connect(self.calculate_age_weight)
@@ -93,6 +88,7 @@ class myApp(QWidget):
             if weight or height:
                 female = self.get_gender()
                 if female:
+                    female_height_weight_calc(age, height, weight)
                     self.reset_labels(3)
                 else:
                     male_height_weight_calc(age, height, weight)
@@ -113,6 +109,7 @@ class myApp(QWidget):
             if weight or height:
                 female = self.get_gender()
                 if female:
+                    female_height_weight_calc(age, height, weight)
                     self.reset_labels(3)
                 else:
                     male_height_weight_calc(age, height, weight)
