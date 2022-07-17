@@ -6,7 +6,7 @@ import os
 def under3_weight_calc(user_age, user_weight):
 
     im = PIL.Image.open(os.path.dirname(__file__) +
-                        '/courbe-poids-0a3ans-1.jpeg')
+                        '/courbe-poids-0a3ans.jpeg')
 
     max_age, max_weight = 36, 22
     img_max_age, img_max_weight = im.size

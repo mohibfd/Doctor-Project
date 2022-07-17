@@ -8,7 +8,7 @@ def under3_height_calc(user_age, user_height):
     im = PIL.Image.open(os.path.dirname(__file__) +
                         '/courbe-taille-0a3ans.jpeg')
 
-    max_age, max_height = 36, 115
+    max_age = 36
     img_max_age, img_max_height = im.size
 
     x_offput = 18

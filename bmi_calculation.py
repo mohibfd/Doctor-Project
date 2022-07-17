@@ -4,15 +4,16 @@ from PyQt6.QtGui import QIcon
 from PyQt6 import uic
 from bmi import bmi_calc
 from weight_0to3 import under3_weight_calc
+from height_weight_male import male_height_weight_calc
 from height_0to3 import under3_height_calc
 
 
 class myApp(QWidget):
     def __init__(self):
         super().__init__()
-        uic.loadUi('gui.ui', self)
-        self.setWindowTitle('Doctor Randa\'s App')
-        # self.setWindowIcon(QIcon('temp.png'))
+        uic.loadUi("gui.ui", self)
+        self.setWindowTitle("Doctor Randa\'s App")
+        # self.setWindowIcon(QIcon("temp.png"))
 
         self.bmiButton.clicked.connect(self.calculate_bmi)
         self.weightAgeButton.clicked.connect(self.calculate_age_weight)
@@ -24,9 +25,8 @@ class myApp(QWidget):
             return height
         except ValueError:
             self.bmi.setText(
-                'Please set Height correctly')
-            self.child_health.setText("")
-            self.healthy_range.setText("")
+                "Please set Height correctly")
+            self.reset_labels(2)
 
     def get_weight(self):
         try:
@@ -35,9 +35,8 @@ class myApp(QWidget):
 
         except ValueError:
             self.bmi.setText(
-                'Please set Weight correctly')
-            self.child_health.setText("")
-            self.healthy_range.setText("")
+                "Please set Weight correctly")
+            self.reset_labels(2)
 
     def get_age(self):
         try:
@@ -48,6 +47,7 @@ class myApp(QWidget):
                 under3 = False
             elif not year and age > 36:
                 under3 = False
+                age /= 12
             elif under3 and year:
                 age *= 12
 
@@ -55,15 +55,24 @@ class myApp(QWidget):
 
         except ValueError:
             self.bmi.setText(
-                'Please set Age correctly')
-            self.child_health.setText("")
-            self.healthy_range.setText("")
+                "Please set Age correctly")
+            self.reset_labels(2)
             return None, None
 
-    def calculate_bmi(self):
+    def get_gender(self):
+        female = self.femaleRadioButton.isChecked()
+        return female
 
-        height = self.get_height()
+    def reset_labels(self, num):
+        if num > 1:
+            self.child_health.setText("")
+            self.healthy_range.setText("")
+        if num > 2:
+            self.bmi.setText("")
+
+    def calculate_bmi(self):
         weight = self.get_weight()
+        height = self.get_height()
         if height and weight:
             bmi, health, healthy_range = bmi_calc(height, weight)
             self.bmi.setText(bmi)
@@ -75,8 +84,19 @@ class myApp(QWidget):
         weight = self.get_weight()
 
         if age:
-            if under3:
+            if under3 and weight:
                 under3_weight_calc(age, weight)
+                self.reset_labels(3)
+                return
+
+            height = self.get_height()
+            if weight or height:
+                female = self.get_gender()
+                if female:
+                    self.reset_labels(3)
+                else:
+                    male_height_weight_calc(age, height, weight)
+                    self.reset_labels(3)
 
     def calculate_age_height(self):
         age, under3 = self.get_age()
@@ -84,7 +104,19 @@ class myApp(QWidget):
 
         if age:
             if under3:
-                under3_height_calc(age, height)
+                if height:
+                    under3_height_calc(age, height)
+                    self.reset_labels(3)
+                return
+
+            weight = self.get_weight()
+            if weight or height:
+                female = self.get_gender()
+                if female:
+                    self.reset_labels(3)
+                else:
+                    male_height_weight_calc(age, height, weight)
+                    self.reset_labels(3)
 
 
 app = QApplication(sys.argv)
