@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>DOBLabel</class>
+ <widget class="QWidget" name="DOBLabel">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>430</width>
-    <height>396</height>
+    <width>1607</width>
+    <height>929</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <widget class="QLineEdit" name="heightInput">
+  <widget class="QLineEdit" name="heightInputBMI">
    <property name="geometry">
     <rect>
      <x>180</x>
@@ -36,7 +36,7 @@
     <string>BMI Graph</string>
    </property>
   </widget>
-  <widget class="QLineEdit" name="weightInput">
+  <widget class="QLineEdit" name="weightInputBMI">
    <property name="geometry">
     <rect>
      <x>180</x>
@@ -155,7 +155,7 @@
     <set>Qt::AlignCenter</set>
    </property>
   </widget>
-  <widget class="QLineEdit" name="ageInput">
+  <widget class="QLineEdit" name="ageInputBMI">
    <property name="geometry">
     <rect>
      <x>180</x>
@@ -191,7 +191,7 @@
     <string>Weight Age Graph</string>
    </property>
   </widget>
-  <widget class="QRadioButton" name="monthRadioButton">
+  <widget class="QRadioButton" name="monthRadioButtonBMI">
    <property name="geometry">
     <rect>
      <x>230</x>
@@ -210,7 +210,7 @@
     <string notr="true">ageGroup</string>
    </attribute>
   </widget>
-  <widget class="QRadioButton" name="yearRadioButton">
+  <widget class="QRadioButton" name="yearRadioButtonBMI">
    <property name="geometry">
     <rect>
      <x>310</x>
@@ -242,7 +242,7 @@
     <string>Gender</string>
    </property>
   </widget>
-  <widget class="QRadioButton" name="maleRadioButton">
+  <widget class="QRadioButton" name="maleRadioButtonBMI">
    <property name="geometry">
     <rect>
      <x>270</x>
@@ -261,7 +261,7 @@
     <string notr="true">genderGroup</string>
    </attribute>
   </widget>
-  <widget class="QRadioButton" name="femaleRadioButton">
+  <widget class="QRadioButton" name="femaleRadioButtonBMI">
    <property name="geometry">
     <rect>
      <x>190</x>
@@ -291,6 +291,163 @@
    </property>
    <property name="text">
     <string>Height Age Graph</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="addButton">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>700</y>
+     <width>80</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Add</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_9">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>530</y>
+     <width>71</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>First Name</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="firstNameInput">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>530</y>
+     <width>141</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_10">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>570</y>
+     <width>71</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Last Name</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lastNameInput">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>570</y>
+     <width>141</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_11">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>610</y>
+     <width>71</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>DOB</string>
+   </property>
+  </widget>
+  <widget class="Line" name="line">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>280</y>
+     <width>311</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_2">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>320</y>
+     <width>311</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="Line" name="line_3">
+   <property name="geometry">
+    <rect>
+     <x>60</x>
+     <y>360</y>
+     <width>311</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+  </widget>
+  <widget class="QTableView" name="view">
+   <property name="geometry">
+    <rect>
+     <x>750</x>
+     <y>80</y>
+     <width>801</width>
+     <height>751</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="deleteButton">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>740</y>
+     <width>80</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Delete</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="vaccineButton">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>780</y>
+     <width>121</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Vaccination Table</string>
+   </property>
+  </widget>
+  <widget class="QDateEdit" name="DOBInput">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>610</y>
+     <width>141</width>
+     <height>22</height>
+    </rect>
    </property>
   </widget>
  </widget>
