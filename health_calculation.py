@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QWidget, QMessageBox
-from PyQt6 import uic
-from PyQt6.QtCore import Qt
+from PyQt6 import uic, QtCore
+from PyQt6.QtCore import Qt, QSortFilterProxyModel
 from PyQt6.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
 
 from calculations import bmi_calc, under3_weight_calc, under3_height_calc, male_height_weight_calc, female_height_weight_calc
@@ -18,6 +18,7 @@ class myApp(QWidget):
         self.heightAgeButton.clicked.connect(self.calculate_age_height)
         self.addButton.clicked.connect(self.add_to_database)
         self.deleteButton.clicked.connect(self.delete_from_database)
+        # self.searchInput.textChanged.connect(msa_searchInput_textChanged)
 
         self.initialise_table()
 
@@ -32,6 +33,16 @@ class myApp(QWidget):
         self.model.select()
         self.view.setModel(self.model)
         self.view.resizeColumnsToContents()
+
+        filter_proxy_model = QSortFilterProxyModel()
+        filter_proxy_model.setSourceModel(self.model)
+        self.view.setModel(filter_proxy_model)
+        filter_proxy_model.setFilterCaseSensitivity(
+            Qt.CaseSensitivity.CaseInsensitive)
+        filter_proxy_model.setFilterKeyColumn(1)
+        search_field = self.searchInput
+        search_field.textChanged.connect(
+            filter_proxy_model.setFilterRegularExpression)
 
     def add_to_database(self):
 
@@ -182,82 +193,96 @@ if not createConnection():
     sys.exit(1)
 
 
-def create_new_table():
-    createTableQuery = QSqlQuery()
-    createTableQuery.exec(
-        """
-        CREATE TABLE patients (
-            id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-            firstName VARCHAR(30) NOT NULL,
-            lastName VARCHAR(30) NOT NULL,
-            DOB DATE,
-            hepatiteB_1 DATE,
-            hepatiteB_2 DATE,
-            hepatiteB_3 DATE,
-            hepatiteB_4 DATE,
-            hepatiteB_5 DATE,
-            penta_1 DATE,
-            penta_2 DATE,
-            penta_3 DATE,
-            penta_4 DATE,
-            penta_5 DATE,
-            tetra_1 DATE,
-            tetra_2 DATE,
-            tetra_3 DATE,
-            tetra_4 DATE,
-            tetra_5 DATE,
-            prevnar13_1 DATE,
-            prevnar13_2 DATE,
-            prevnar13_3 DATE,
-            prevnar13_4 DATE,
-            prevnar13_5 DATE,
-            rota_1 DATE,
-            rota_2 DATE,
-            rota_3 DATE,
-            rota_4 DATE,
-            rota_5 DATE,
-            meningo_1 DATE,
-            meningo_2 DATE,
-            meningo_3 DATE,
-            meningo_4 DATE,
-            meningo_5 DATE,
-            priorix_1 DATE,
-            priorix_2 DATE,
-            priorix_3 DATE,
-            priorix_4 DATE,
-            priorix_5 DATE,
-            varilix_1 DATE,
-            varilix_2 DATE,
-            varilix_3 DATE,
-            varilix_4 DATE,
-            varilix_5 DATE,
-            hepatiteA_1 DATE,
-            hepatiteA_2 DATE,
-            hepatiteA_3 DATE,
-            hepatiteA_4 DATE,
-            hepatiteA_5 DATE,
-            typhimVI_1 DATE,
-            typhimVI_2 DATE,
-            typhimVI_3 DATE,
-            typhimVI_4 DATE,
-            typhimVI_5 DATE,
-            papilomaVirus_1 DATE,
-            papilomaVirus_2 DATE,
-            papilomaVirus_3 DATE,
-            papilomaVirus_4 DATE,
-            papilomaVirus_5 DATE
-        )
-        """
-    )
+@QtCore.pyqtSlot(str)
+def msa_searchInput_textChanged(self):
+    print('INN')
+    search = QtCore.QRegularExpression(self.searchInput.text(),
+                                       QtCore.Qt.CaseInsensitive, QtCore.QRegularExpression.RegExp)
+    self.proxy.setFilterKeyColumn(self.combo.currentIndex() - 1)
+    self.proxy.setFilterRegExp(search)
 
 
-def drop_table():
-    dropTableQuery = QSqlQuery()
-    dropTableQuery.exec(
-        """
-    DROP TABLE patients
-    """
-    )
+# def create_new_table():
+#     createTableQuery = QSqlQuery()
+#     createTableQuery.exec(
+#         """
+#         CREATE TABLE patients (
+#             id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
+#             firstName VARCHAR(30) NOT NULL,
+#             lastName VARCHAR(30) NOT NULL,
+#             DOB DATE,
+#             hepatiteB_1 DATE,
+#             hepatiteB_2 DATE,
+#             hepatiteB_3 DATE,
+#             hepatiteB_4 DATE,
+#             hepatiteB_5 DATE,
+#             penta_1 DATE,
+#             penta_2 DATE,
+#             penta_3 DATE,
+#             penta_4 DATE,
+#             penta_5 DATE,
+#             tetra_1 DATE,
+#             tetra_2 DATE,
+#             tetra_3 DATE,
+#             tetra_4 DATE,
+#             tetra_5 DATE,
+#             prevnar13_1 DATE,
+#             prevnar13_2 DATE,
+#             prevnar13_3 DATE,
+#             prevnar13_4 DATE,
+#             prevnar13_5 DATE,
+#             rota_1 DATE,
+#             rota_2 DATE,
+#             rota_3 DATE,
+#             rota_4 DATE,
+#             rota_5 DATE,
+#             meningo_1 DATE,
+#             meningo_2 DATE,
+#             meningo_3 DATE,
+#             meningo_4 DATE,
+#             meningo_5 DATE,
+#             priorix_1 DATE,
+#             priorix_2 DATE,
+#             priorix_3 DATE,
+#             priorix_4 DATE,
+#             priorix_5 DATE,
+#             varilix_1 DATE,
+#             varilix_2 DATE,
+#             varilix_3 DATE,
+#             varilix_4 DATE,
+#             varilix_5 DATE,
+#             hepatiteA_1 DATE,
+#             hepatiteA_2 DATE,
+#             hepatiteA_3 DATE,
+#             hepatiteA_4 DATE,
+#             hepatiteA_5 DATE,
+#             typhimVI_1 DATE,
+#             typhimVI_2 DATE,
+#             typhimVI_3 DATE,
+#             typhimVI_4 DATE,
+#             typhimVI_5 DATE,
+#             papilomaVirus_1 DATE,
+#             papilomaVirus_2 DATE,
+#             papilomaVirus_3 DATE,
+#             papilomaVirus_4 DATE,
+#             papilomaVirus_5 DATE,
+#             autres_1 DATE,
+#             autres_2 DATE,
+#             autres_3 DATE,
+#             autres_4 DATE,
+#             autres_5 DATE
+#         )
+#         """
+#     )
+
+
+# def drop_table():
+#     dropTableQuery = QSqlQuery()
+#     dropTableQuery.exec(
+#         """
+#     DROP TABLE patients
+#     """
+#     )
 
 
 # create_new_table()
