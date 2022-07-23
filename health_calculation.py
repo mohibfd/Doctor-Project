@@ -3,8 +3,40 @@ from PyQt6.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt6 import uic, QtCore
 from PyQt6.QtCore import Qt, QSortFilterProxyModel
 from PyQt6.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
+import pandas as pd
 
 from calculations import bmi_calc, under3_weight_calc, under3_height_calc, male_height_weight_calc, female_height_weight_calc
+
+vaccine_list = [
+    "HepatiteB", "Penta", "Tetra", "Prevnar13", "Rota", "Meningo", "Priorix", "Varilix", "Hepatite A", "Typhim VI", "Papilloma virus", "Autres"
+]
+
+
+class TableModel(QtCore.QAbstractTableModel):
+
+    def __init__(self, data):
+        super(TableModel, self).__init__()
+        self._data = data
+
+    def data(self, index, role):
+        if role == Qt.ItemDataRole.DisplayRole:
+            value = self._data.iloc[index.row(), index.column()]
+            return str(value)
+
+    def rowCount(self, index):
+        return self._data.shape[0]
+
+    def columnCount(self, index):
+        return self._data.shape[1]
+
+    def headerData(self, section, orientation, role):
+        # section is the index of the column/row.
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
+                return str(self._data.columns[section])
+
+            if orientation == Qt.Orientation.Vertical:
+                return str(self._data.index[section])
 
 
 class myApp(QWidget):
@@ -13,12 +45,20 @@ class myApp(QWidget):
         uic.loadUi("calculations/gui.ui", self)
         self.setWindowTitle("Doctor Randa\'s App")
 
+        for i in vaccine_list:
+            self.vaccineDropdown.addItem(i)
+
+        self.dateInput.setDateTime(QtCore.QDateTime.currentDateTime())
+
         self.bmiButton.clicked.connect(self.calculate_bmi)
         self.weightAgeButton.clicked.connect(self.calculate_age_weight)
         self.heightAgeButton.clicked.connect(self.calculate_age_height)
-        self.addButton.clicked.connect(self.add_to_database)
+        self.addButton.clicked.connect(self.add_patient)
         self.deleteButton.clicked.connect(self.delete_from_database)
-        # self.searchInput.textChanged.connect(msa_searchInput_textChanged)
+        self.vaccinationButton.clicked.connect(self.show_vaccination_table)
+        self.addVaccineButton.clicked.connect(self.add_vaccine)
+
+        self.vaccine_start_index = 4
 
         self.initialise_table()
 
@@ -26,13 +66,19 @@ class myApp(QWidget):
         self.model = QSqlTableModel(self)
         self.model.setTable("patients")
         self.model.setEditStrategy(QSqlTableModel.EditStrategy.OnFieldChange)
-        # self.model.setHeaderData(0, Qt.Orientation.Horizontal, "ID")
-        # self.model.setHeaderData(1, Qt.Orientation.Horizontal, "Name")
-        # self.model.setHeaderData(2, Qt.Orientation.Horizontal, "Job")
-        # self.model.setHeaderData(3, Qt.Orientation.Horizontal, "Email")
+        self.model.setHeaderData(0, Qt.Orientation.Horizontal, "ID")
+        self.model.setHeaderData(1, Qt.Orientation.Horizontal, "First Name")
+        self.model.setHeaderData(2, Qt.Orientation.Horizontal, "Last Name")
+        self.model.setHeaderData(3, Qt.Orientation.Horizontal, "DOB")
+        for i in range(len(vaccine_list)):
+            for j in range(5):
+                self.model.setHeaderData(self.vaccine_start_index + i * 5 + j,
+                                         Qt.Orientation.Horizontal, vaccine_list[i] + " " + str(j+1))
+
         self.model.select()
         self.view.setModel(self.model)
         self.view.resizeColumnsToContents()
+        self.view.hideColumn(0)
 
         filter_proxy_model = QSortFilterProxyModel()
         filter_proxy_model.setSourceModel(self.model)
@@ -44,10 +90,82 @@ class myApp(QWidget):
         search_field.textChanged.connect(
             filter_proxy_model.setFilterRegularExpression)
 
-    def add_to_database(self):
+    def show_vaccination_table(self):
+        index = self.get_row_index()
+        if index:
+            query = QSqlQuery()
+            query.prepare(
+                """
+                SELECT *
+                FROM patients
+                WHERE patients.id = ?
+                """
+            )
 
-        insertDataQuery = QSqlQuery()
-        insertDataQuery.prepare(
+            query.addBindValue(index)
+            query.exec()
+            query.first()
+
+            vaccine_data = []
+            for i in range(len(vaccine_list)):
+                specific_vaccine_data = []
+                for j in range(5):
+                    specific_vaccine_data.append(
+                        query.value(self.vaccine_start_index + i * 5 + j))
+                vaccine_data.append(specific_vaccine_data)
+
+            data = pd.DataFrame(
+                vaccine_data, columns=range(1, 6), index=vaccine_list)
+
+            self.vaccine_model = TableModel(data)
+            self.vaccinationView.setModel(self.vaccine_model)
+            self.vaccine_model.setHeaderData(
+                0, Qt.Orientation.Horizontal, "ID")
+
+    def add_vaccine(self):
+        index = self.get_row_index()
+        if index:
+
+            vaccine = self.vaccineDropdown.currentText()
+            date = self.dateInput.date()
+
+            vaccine = vaccine[0].lower() + vaccine[1:]
+
+            retrieve_vaccine_query = QSqlQuery()
+            retrieve_vaccine_query.prepare(
+                """
+                SELECT *
+                FROM patients
+                WHERE id = ?
+                """
+            )
+
+            retrieve_vaccine_query.addBindValue(index)
+            retrieve_vaccine_query.exec()
+            retrieve_vaccine_query.first()
+            for i in range(1, 6):
+                if retrieve_vaccine_query.value(vaccine + '_' + str(i)) == "":
+                    break
+
+            vaccine += '_' + str(i)
+            insert_vaccine_query = QSqlQuery()
+            insert_vaccine_query.prepare(
+                """
+                UPDATE patients
+                SET """ + vaccine + """ = ?
+                WHERE id = ?
+                """
+            )
+
+            insert_vaccine_query.addBindValue(date)
+            insert_vaccine_query.addBindValue(index)
+            insert_vaccine_query.exec()
+
+            self.initialise_table()
+
+    def add_patient(self):
+        insert_patient_query = QSqlQuery()
+        insert_patient_query.prepare(
             """
             INSERT INTO patients(
                 firstName,
@@ -58,19 +176,43 @@ class myApp(QWidget):
             """
         )
 
-        insertDataQuery.addBindValue(self.firstNameInput.text())
-        insertDataQuery.addBindValue(self.lastNameInput.text())
-        insertDataQuery.addBindValue(self.DOBInput.date())
-        insertDataQuery.exec()
+        insert_patient_query.addBindValue(self.firstNameInput.text())
+        insert_patient_query.addBindValue(self.lastNameInput.text())
+        insert_patient_query.addBindValue(self.DOBInput.date())
+        insert_patient_query.exec()
 
         self.initialise_table()
 
     def delete_from_database(self):
-        indices = self.view.selectionModel().selectedRows()
-        for index in sorted(indices):
-            self.model.removeRow(index.row())
+        try:
+            index = self.view.selectionModel().selectedRows()[0]
+            index = self.model.data(index)
 
-        self.initialise_table()
+            indices = self.view.selectionModel().selectedRows()
+            for index in sorted(indices):
+                self.model.removeRow(index.row())
+
+            self.initialise_table()
+
+        except IndexError:
+            QMessageBox.critical(
+                None,
+                "",
+                "Please select a patient",
+            )
+
+    def get_row_index(self):
+        try:
+            index = self.view.selectionModel().selectedRows()[0]
+            index = self.model.data(index)
+            return index
+
+        except IndexError:
+            QMessageBox.critical(
+                None,
+                "",
+                "Please select a patient",
+            )
 
     def get_height(self):
         try:
@@ -201,92 +343,6 @@ def msa_searchInput_textChanged(self):
     self.proxy.setFilterKeyColumn(self.combo.currentIndex() - 1)
     self.proxy.setFilterRegExp(search)
 
-
-# def create_new_table():
-#     createTableQuery = QSqlQuery()
-#     createTableQuery.exec(
-#         """
-#         CREATE TABLE patients (
-#             id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
-#             firstName VARCHAR(30) NOT NULL,
-#             lastName VARCHAR(30) NOT NULL,
-#             DOB DATE,
-#             hepatiteB_1 DATE,
-#             hepatiteB_2 DATE,
-#             hepatiteB_3 DATE,
-#             hepatiteB_4 DATE,
-#             hepatiteB_5 DATE,
-#             penta_1 DATE,
-#             penta_2 DATE,
-#             penta_3 DATE,
-#             penta_4 DATE,
-#             penta_5 DATE,
-#             tetra_1 DATE,
-#             tetra_2 DATE,
-#             tetra_3 DATE,
-#             tetra_4 DATE,
-#             tetra_5 DATE,
-#             prevnar13_1 DATE,
-#             prevnar13_2 DATE,
-#             prevnar13_3 DATE,
-#             prevnar13_4 DATE,
-#             prevnar13_5 DATE,
-#             rota_1 DATE,
-#             rota_2 DATE,
-#             rota_3 DATE,
-#             rota_4 DATE,
-#             rota_5 DATE,
-#             meningo_1 DATE,
-#             meningo_2 DATE,
-#             meningo_3 DATE,
-#             meningo_4 DATE,
-#             meningo_5 DATE,
-#             priorix_1 DATE,
-#             priorix_2 DATE,
-#             priorix_3 DATE,
-#             priorix_4 DATE,
-#             priorix_5 DATE,
-#             varilix_1 DATE,
-#             varilix_2 DATE,
-#             varilix_3 DATE,
-#             varilix_4 DATE,
-#             varilix_5 DATE,
-#             hepatiteA_1 DATE,
-#             hepatiteA_2 DATE,
-#             hepatiteA_3 DATE,
-#             hepatiteA_4 DATE,
-#             hepatiteA_5 DATE,
-#             typhimVI_1 DATE,
-#             typhimVI_2 DATE,
-#             typhimVI_3 DATE,
-#             typhimVI_4 DATE,
-#             typhimVI_5 DATE,
-#             papilomaVirus_1 DATE,
-#             papilomaVirus_2 DATE,
-#             papilomaVirus_3 DATE,
-#             papilomaVirus_4 DATE,
-#             papilomaVirus_5 DATE,
-#             autres_1 DATE,
-#             autres_2 DATE,
-#             autres_3 DATE,
-#             autres_4 DATE,
-#             autres_5 DATE
-#         )
-#         """
-#     )
-
-
-# def drop_table():
-#     dropTableQuery = QSqlQuery()
-#     dropTableQuery.exec(
-#         """
-#     DROP TABLE patients
-#     """
-#     )
-
-
-# create_new_table()
-# drop_table()
 
 window = myApp()
 window.show()
