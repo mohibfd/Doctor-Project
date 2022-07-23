@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt, QSortFilterProxyModel
 from PyQt6.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
 import pandas as pd
 
-from calculations import bmi_calc, under3_weight_calc, under3_height_calc, male_height_weight_calc, female_height_weight_calc
+from bmi_calculations import bmi_calc, under3_weight_calc, under3_height_calc, male_height_weight_calc, female_height_weight_calc
 
 vaccine_list = [
     "HepatiteB", "Penta", "Tetra", "Prevnar13", "Rota", "Meningo", "Priorix", "Varilix", "Hepatite A", "Typhim VI", "Papilloma virus", "Autres"
