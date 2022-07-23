@@ -8,7 +8,7 @@ import pandas as pd
 from bmi_calculations import bmi_calc, under3_weight_calc, under3_height_calc, male_height_weight_calc, female_height_weight_calc
 
 vaccine_list = [
-    "HepatiteB", "Penta", "Tetra", "Prevnar13", "Rota", "Meningo", "Priorix", "Varilix", "Hepatite A", "Typhim VI", "Papilloma virus", "Autres"
+    "Hepatite B", "Penta", "Tetra", "Prevnar 13", "Rota", "Meningo", "Priorix", "Varilix", "Hepatite A", "Typhim VI", "Papilloma virus", "Autres"
 ]
 
 
@@ -125,12 +125,6 @@ class myApp(QWidget):
     def add_vaccine(self):
         index = self.get_row_index()
         if index:
-
-            vaccine = self.vaccineDropdown.currentText()
-            date = self.dateInput.date()
-
-            vaccine = vaccine[0].lower() + vaccine[1:]
-
             retrieve_vaccine_query = QSqlQuery()
             retrieve_vaccine_query.prepare(
                 """
@@ -143,6 +137,16 @@ class myApp(QWidget):
             retrieve_vaccine_query.addBindValue(index)
             retrieve_vaccine_query.exec()
             retrieve_vaccine_query.first()
+
+            vaccine = self.vaccineDropdown.currentText()
+            if vaccine == 'Hepatite B' or vaccine == 'Hepatite A':
+                vaccine = vaccine[:-2] + vaccine[-1]
+            elif vaccine == 'Prevnar 13' or vaccine == 'Typhim VI':
+                vaccine = vaccine[:-3] + vaccine[-2:]
+            elif vaccine == 'Papilloma virus':
+                vaccine = vaccine[:-6] + vaccine[-5].upper() + vaccine[-4:]
+
+            vaccine = vaccine[0].lower() + vaccine[1:]
             for i in range(1, 6):
                 if retrieve_vaccine_query.value(vaccine + '_' + str(i)) == "":
                     break
@@ -157,10 +161,12 @@ class myApp(QWidget):
                 """
             )
 
+            date = self.dateInput.date()
             insert_vaccine_query.addBindValue(date)
             insert_vaccine_query.addBindValue(index)
             insert_vaccine_query.exec()
 
+            self.show_vaccination_table()
             self.initialise_table()
 
     def add_patient(self):
@@ -184,22 +190,28 @@ class myApp(QWidget):
         self.initialise_table()
 
     def delete_from_database(self):
-        try:
-            index = self.view.selectionModel().selectedRows()[0]
-            index = self.model.data(index)
-
-            indices = self.view.selectionModel().selectedRows()
-            for index in sorted(indices):
-                self.model.removeRow(index.row())
-
-            self.initialise_table()
-
-        except IndexError:
-            QMessageBox.critical(
+        indices = self.view.selectionModel().selectedRows()
+        if len(indices) == 0:
+            QMessageBox.warning(
                 None,
                 "",
                 "Please select a patient",
             )
+        else:
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Icon.Critical)
+            msgBox.setText(
+                "Are you sure you would like to delete this patient?")
+            msgBox.setStandardButtons(
+                QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Yes)
+            msgBox.setDefaultButton(QMessageBox.StandardButton.Cancel)
+
+            returnValue = msgBox.exec()
+            if returnValue == QMessageBox.StandardButton.Yes:
+                for index in sorted(indices):
+                    self.model.removeRow(index.row())
+
+                self.initialise_table()
 
     def get_row_index(self):
         try:
@@ -208,7 +220,7 @@ class myApp(QWidget):
             return index
 
         except IndexError:
-            QMessageBox.critical(
+            QMessageBox.warning(
                 None,
                 "",
                 "Please select a patient",
@@ -333,16 +345,6 @@ def createConnection():
 app = QApplication(sys.argv)
 if not createConnection():
     sys.exit(1)
-
-
-@QtCore.pyqtSlot(str)
-def msa_searchInput_textChanged(self):
-    print('INN')
-    search = QtCore.QRegularExpression(self.searchInput.text(),
-                                       QtCore.Qt.CaseInsensitive, QtCore.QRegularExpression.RegExp)
-    self.proxy.setFilterKeyColumn(self.combo.currentIndex() - 1)
-    self.proxy.setFilterRegExp(search)
-
 
 window = myApp()
 window.show()
