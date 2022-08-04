@@ -48,7 +48,9 @@ class myApp(QWidget):
         for i in vaccine_list:
             self.vaccineDropdown.addItem(i)
 
-        self.dateInput.setDateTime(QtCore.QDateTime.currentDateTime())
+        self.vaccineDateInput.setDateTime(QtCore.QDateTime.currentDateTime())
+        self.examinationDateInput.setDateTime(
+            QtCore.QDateTime.currentDateTime())
 
         self.bmiButton.clicked.connect(self.calculate_bmi)
         self.weightAgeButton.clicked.connect(self.calculate_age_weight)
@@ -168,7 +170,7 @@ class myApp(QWidget):
                 """
             )
 
-            date = self.dateInput.date()
+            date = self.vaccineDateInput.date()
             insert_vaccine_query.addBindValue(date)
             insert_vaccine_query.addBindValue(id_index)
             insert_vaccine_query.exec()
