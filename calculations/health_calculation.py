@@ -62,7 +62,7 @@ class myApp(QWidget):
 
         self.initialise_table()
 
-    def initialise_table(self):
+    def initialise_table(self) -> None:
         self.model = QSqlTableModel(self)
         self.model.setTable("patients")
         self.model.setEditStrategy(QSqlTableModel.EditStrategy.OnFieldChange)
@@ -90,9 +90,14 @@ class myApp(QWidget):
         search_field.textChanged.connect(
             filter_proxy_model.setFilterRegularExpression)
 
-    def show_vaccination_table(self):
+    def refresh_table(self, selectedRow: int) -> None:
+        self.initialise_table()
+        self.view.selectRow(selectedRow)
+
+    def show_vaccination_table(self) -> None:
         index = self.get_row_index()
         if index:
+            id_index = self.model.data(index)
             query = QSqlQuery()
             query.prepare(
                 """
@@ -102,7 +107,7 @@ class myApp(QWidget):
                 """
             )
 
-            query.addBindValue(index)
+            query.addBindValue(id_index)
             query.exec()
             query.first()
 
@@ -122,9 +127,11 @@ class myApp(QWidget):
             self.vaccine_model.setHeaderData(
                 0, Qt.Orientation.Horizontal, "ID")
 
-    def add_vaccine(self):
+    def add_vaccine(self) -> None:
         index = self.get_row_index()
         if index:
+            id_index = self.model.data(index)
+            row_index = index.row()
             retrieve_vaccine_query = QSqlQuery()
             retrieve_vaccine_query.prepare(
                 """
@@ -134,7 +141,7 @@ class myApp(QWidget):
                 """
             )
 
-            retrieve_vaccine_query.addBindValue(index)
+            retrieve_vaccine_query.addBindValue(id_index)
             retrieve_vaccine_query.exec()
             retrieve_vaccine_query.first()
 
@@ -163,33 +170,60 @@ class myApp(QWidget):
 
             date = self.dateInput.date()
             insert_vaccine_query.addBindValue(date)
-            insert_vaccine_query.addBindValue(index)
+            insert_vaccine_query.addBindValue(id_index)
             insert_vaccine_query.exec()
 
             self.show_vaccination_table()
-            self.initialise_table()
+            self.refresh_table(row_index)
 
-    def add_patient(self):
-        insert_patient_query = QSqlQuery()
-        insert_patient_query.prepare(
-            """
-            INSERT INTO patients(
-                firstName,
-                lastName,
-                DOB
+    def add_patient(self) -> None:
+        if self.firstNameInput.text() == '':
+            if self.lastNameInput.text() == '':
+                QMessageBox.warning(
+                    None,
+                    "",
+                    "Please enter a first name and last name",
+                )
+            else:
+                QMessageBox.warning(
+                    None,
+                    "",
+                    "Please enter a first name",
+                )
+        elif self.lastNameInput.text() == '':
+            QMessageBox.warning(
+                None,
+                "",
+                "Please enter a last name",
             )
-            VALUES (?, ?, ?)
-            """
-        )
 
-        insert_patient_query.addBindValue(self.firstNameInput.text())
-        insert_patient_query.addBindValue(self.lastNameInput.text())
-        insert_patient_query.addBindValue(self.DOBInput.date())
-        insert_patient_query.exec()
+        else:
+            row_count_query = QSqlQuery()
+            row_count_query.exec("SELECT COUNT(*) FROM patients")
+            row_count_query.first()
+            row_index = row_count_query.value(0)
 
-        self.initialise_table()
+            insert_patient_query = QSqlQuery()
+            insert_patient_query.prepare(
+                """
+                INSERT INTO patients(
+                    firstName,
+                    lastName,
+                    DOB
+                )
+                VALUES (?, ?, ?)
+                """
+            )
 
-    def delete_from_database(self):
+            insert_patient_query.addBindValue(self.firstNameInput.text())
+            insert_patient_query.addBindValue(self.lastNameInput.text())
+            insert_patient_query.addBindValue(self.DOBInput.date())
+            insert_patient_query.exec()
+
+            self.refresh_table(row_index)
+            self.show_vaccination_table()
+
+    def delete_from_database(self) -> None:
         indices = self.view.selectionModel().selectedRows()
         if len(indices) == 0:
             QMessageBox.warning(
@@ -213,10 +247,9 @@ class myApp(QWidget):
 
                 self.initialise_table()
 
-    def get_row_index(self):
+    def get_row_index(self) -> int:
         try:
             index = self.view.selectionModel().selectedRows()[0]
-            index = self.model.data(index)
             return index
 
         except IndexError:
@@ -226,7 +259,7 @@ class myApp(QWidget):
                 "Please select a patient",
             )
 
-    def get_height(self):
+    def get_height(self) -> float:
         try:
             height = float(self.heightInputBMI.text())
             return height
@@ -235,7 +268,7 @@ class myApp(QWidget):
                 "Please set Height correctly")
             self.reset_labels(2)
 
-    def get_weight(self):
+    def get_weight(self) -> float:
         try:
             weight = float(self.weightInputBMI.text())
             return weight
@@ -245,7 +278,7 @@ class myApp(QWidget):
                 "Please set Weight correctly")
             self.reset_labels(2)
 
-    def get_age(self):
+    def get_age(self) -> float:
         try:
             age = float(self.ageInputBMI.text())
             year = self.yearRadioButtonBMI.isChecked()
@@ -266,18 +299,18 @@ class myApp(QWidget):
             self.reset_labels(2)
             return None, None
 
-    def get_gender(self):
+    def get_gender(self) -> bool:
         female = self.femaleRadioButtonBMI.isChecked()
         return female
 
-    def reset_labels(self, num):
+    def reset_labels(self, num: int) -> None:
         if num > 1:
             self.child_health.setText("")
             self.healthy_range.setText("")
         if num > 2:
             self.bmi.setText("")
 
-    def calculate_bmi(self):
+    def calculate_bmi(self) -> None:
         weight = self.get_weight()
         height = self.get_height()
         if height and weight:
@@ -286,7 +319,7 @@ class myApp(QWidget):
             self.child_health.setText(health)
             self.healthy_range.setText(healthy_range)
 
-    def calculate_age_weight(self):
+    def calculate_age_weight(self) -> None:
         age, under3 = self.get_age()
         weight = self.get_weight()
 
@@ -306,7 +339,7 @@ class myApp(QWidget):
                     male_height_weight_calc(age, height, weight)
                     self.reset_labels(3)
 
-    def calculate_age_height(self):
+    def calculate_age_height(self) -> None:
         age, under3 = self.get_age()
         height = self.get_height()
 
@@ -328,7 +361,7 @@ class myApp(QWidget):
                     self.reset_labels(3)
 
 
-def createConnection():
+def createConnection() -> None:
     con = QSqlDatabase.addDatabase("QSQLITE")
     con.setDatabaseName("calculations/patients.sqlite")
 
