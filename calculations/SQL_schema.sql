@@ -1,9 +1,13 @@
-
-CREATE TABLE patients(
+TABLE patients(
     id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
     firstName VARCHAR(30) NOT NULL,
     lastName VARCHAR(30) NOT NULL,
-    DOB DATE,
+    DOB DATE
+)
+
+
+TABLE vaccines (
+    vaccineId INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
     hepatiteB_1 DATE,
     hepatiteB_2 DATE,
     hepatiteB_3 DATE,
@@ -54,14 +58,16 @@ CREATE TABLE patients(
     typhimVI_3 DATE,
     typhimVI_4 DATE,
     typhimVI_5 DATE,
-    papillomaVirus_1 DATE,
-    papillomaVirus_2 DATE,
-    papillomaVirus_3 DATE,
-    papillomaVirus_4 DATE,
-    papillomaVirus_5 DATE,
+    papilomaVirus_1 DATE,
+    papilomaVirus_2 DATE,
+    papilomaVirus_3 DATE,
+    papilomaVirus_4 DATE,
+    papilomaVirus_5 DATE,
     autres_1 DATE,
     autres_2 DATE,
     autres_3 DATE,
     autres_4 DATE,
-    autres_5 DATE
+    autres_5 DATE, 
+  	patientID INT,
+    FOREIGN KEY (patientID) REFERENCES patients(id)
 )

@@ -297,7 +297,7 @@
    <property name="geometry">
     <rect>
      <x>240</x>
-     <y>440</y>
+     <y>450</y>
      <width>101</width>
      <height>31</height>
     </rect>
@@ -310,7 +310,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>400</y>
+     <y>410</y>
      <width>71</width>
      <height>16</height>
     </rect>
@@ -323,7 +323,7 @@
    <property name="geometry">
     <rect>
      <x>100</x>
-     <y>400</y>
+     <y>410</y>
      <width>101</width>
      <height>22</height>
     </rect>
@@ -333,7 +333,7 @@
    <property name="geometry">
     <rect>
      <x>230</x>
-     <y>400</y>
+     <y>410</y>
      <width>71</width>
      <height>16</height>
     </rect>
@@ -346,7 +346,7 @@
    <property name="geometry">
     <rect>
      <x>310</x>
-     <y>400</y>
+     <y>410</y>
      <width>101</width>
      <height>22</height>
     </rect>
@@ -356,7 +356,7 @@
    <property name="geometry">
     <rect>
      <x>70</x>
-     <y>440</y>
+     <y>450</y>
      <width>31</width>
      <height>16</height>
     </rect>
@@ -444,7 +444,7 @@
    <property name="geometry">
     <rect>
      <x>110</x>
-     <y>440</y>
+     <y>450</y>
      <width>91</width>
      <height>21</height>
     </rect>
@@ -486,8 +486,8 @@
   <widget class="QLabel" name="label_13">
    <property name="geometry">
     <rect>
-     <x>20</x>
-     <y>560</y>
+     <x>30</x>
+     <y>580</y>
      <width>51</width>
      <height>16</height>
     </rect>
@@ -500,7 +500,7 @@
    <property name="geometry">
     <rect>
      <x>150</x>
-     <y>610</y>
+     <y>630</y>
      <width>121</width>
      <height>31</height>
     </rect>
@@ -512,9 +512,9 @@
   <widget class="QComboBox" name="vaccineDropdown">
    <property name="geometry">
     <rect>
-     <x>80</x>
-     <y>560</y>
-     <width>141</width>
+     <x>90</x>
+     <y>580</y>
+     <width>131</width>
      <height>21</height>
     </rect>
    </property>
@@ -522,8 +522,8 @@
   <widget class="QLabel" name="label_14">
    <property name="geometry">
     <rect>
-     <x>270</x>
-     <y>560</y>
+     <x>260</x>
+     <y>580</y>
      <width>31</width>
      <height>16</height>
     </rect>
@@ -535,8 +535,8 @@
   <widget class="QDateEdit" name="vaccineDateInput">
    <property name="geometry">
     <rect>
-     <x>320</x>
-     <y>560</y>
+     <x>310</x>
+     <y>580</y>
      <width>91</width>
      <height>21</height>
     </rect>
@@ -552,7 +552,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>P C</string>
+    <string>H C</string>
    </property>
   </widget>
   <widget class="QLineEdit" name="headCircumferenceInput">

@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt6 import uic, QtCore
-from PyQt6.QtCore import Qt, QSortFilterProxyModel
+from PyQt6.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel
 from PyQt6.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
 import pandas as pd
 
@@ -12,22 +12,28 @@ vaccine_list = [
 ]
 
 
-class TableModel(QtCore.QAbstractTableModel):
-
+class PandasModel(QAbstractTableModel):
     def __init__(self, data):
-        super(TableModel, self).__init__()
+        super().__init__()
         self._data = data
-
-    def data(self, index, role):
-        if role == Qt.ItemDataRole.DisplayRole:
-            value = self._data.iloc[index.row(), index.column()]
-            return str(value)
 
     def rowCount(self, index):
         return self._data.shape[0]
 
-    def columnCount(self, index):
+    def columnCount(self, parnet=None):
         return self._data.shape[1]
+
+    def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+        if index.isValid():
+            if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.EditRole:
+                value = self._data.iloc[index.row(), index.column()]
+                return str(value)
+
+    def setData(self, index, value, role):
+        if role == Qt.ItemDataRole.EditRole:
+            self._data.iloc[index.row(), index.column()] = value
+            return True
+        return False
 
     def headerData(self, section, orientation, role):
         # section is the index of the column/row.
@@ -37,6 +43,9 @@ class TableModel(QtCore.QAbstractTableModel):
 
             if orientation == Qt.Orientation.Vertical:
                 return str(self._data.index[section])
+
+    def flags(self, index):
+        return Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsEditable
 
 
 class myApp(QWidget):
@@ -60,7 +69,7 @@ class myApp(QWidget):
         self.vaccinationButton.clicked.connect(self.show_vaccination_table)
         self.addVaccineButton.clicked.connect(self.add_vaccine)
 
-        self.vaccine_start_index = 4
+        self.vaccine_start_index = 1
 
         self.initialise_table()
 
@@ -72,10 +81,6 @@ class myApp(QWidget):
         self.model.setHeaderData(1, Qt.Orientation.Horizontal, "First Name")
         self.model.setHeaderData(2, Qt.Orientation.Horizontal, "Last Name")
         self.model.setHeaderData(3, Qt.Orientation.Horizontal, "DOB")
-        for i in range(len(vaccine_list)):
-            for j in range(5):
-                self.model.setHeaderData(self.vaccine_start_index + i * 5 + j,
-                                         Qt.Orientation.Horizontal, vaccine_list[i] + " " + str(j+1))
 
         self.model.select()
         self.view.setModel(self.model)
@@ -104,8 +109,8 @@ class myApp(QWidget):
             query.prepare(
                 """
                 SELECT *
-                FROM patients
-                WHERE patients.id = ?
+                FROM vaccines
+                WHERE patientID = ?
                 """
             )
 
@@ -124,7 +129,7 @@ class myApp(QWidget):
             data = pd.DataFrame(
                 vaccine_data, columns=range(1, 6), index=vaccine_list)
 
-            self.vaccine_model = TableModel(data)
+            self.vaccine_model = PandasModel(data)
             self.vaccinationView.setModel(self.vaccine_model)
             self.vaccine_model.setHeaderData(
                 0, Qt.Orientation.Horizontal, "ID")
@@ -138,12 +143,10 @@ class myApp(QWidget):
             retrieve_vaccine_query.prepare(
                 """
                 SELECT *
-                FROM patients
-                WHERE id = ?
+                FROM vaccines
                 """
             )
 
-            retrieve_vaccine_query.addBindValue(id_index)
             retrieve_vaccine_query.exec()
             retrieve_vaccine_query.first()
 
@@ -164,9 +167,9 @@ class myApp(QWidget):
             insert_vaccine_query = QSqlQuery()
             insert_vaccine_query.prepare(
                 """
-                UPDATE patients
+                UPDATE vaccines
                 SET """ + vaccine + """ = ?
-                WHERE id = ?
+                WHERE patientID = ?
                 """
             )
 
@@ -221,6 +224,22 @@ class myApp(QWidget):
             insert_patient_query.addBindValue(self.lastNameInput.text())
             insert_patient_query.addBindValue(self.DOBInput.date())
             insert_patient_query.exec()
+            insert_patient_query.next()
+
+            select_id_query = QSqlQuery()
+            select_id_query.exec("SELECT last_insert_rowid()")
+            select_id_query.first()
+            foreign_id = select_id_query.value(0)
+
+            insert_vaccines_query = QSqlQuery()
+            insert_vaccines_query.prepare(
+                """
+                INSERT INTO vaccines(patientID)
+                VALUES (?)
+                """
+            )
+            insert_vaccines_query.addBindValue(foreign_id)
+            insert_vaccines_query.exec()
 
             self.refresh_table(row_index)
             self.show_vaccination_table()
