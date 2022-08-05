@@ -12,10 +12,23 @@ vaccine_list = [
 ]
 
 
+def get_vaccine(vaccine) -> str:
+    if vaccine == 'Hepatite B' or vaccine == 'Hepatite A':
+        vaccine = vaccine[:-2] + vaccine[-1]
+    elif vaccine == 'Prevnar 13' or vaccine == 'Typhim VI':
+        vaccine = vaccine[:-3] + vaccine[-2:]
+    elif vaccine == 'Papilloma virus':
+        vaccine = vaccine[:-6] + vaccine[-5].upper() + vaccine[-4:]
+
+    vaccine = vaccine[0].lower() + vaccine[1:]
+    return vaccine + '_'
+
+
 class PandasModel(QAbstractTableModel):
-    def __init__(self, data):
+    def __init__(self, data, id):
         super().__init__()
         self._data = data
+        self.id = id
 
     def rowCount(self, index):
         return self._data.shape[0]
@@ -32,6 +45,24 @@ class PandasModel(QAbstractTableModel):
     def setData(self, index, value, role):
         if role == Qt.ItemDataRole.EditRole:
             self._data.iloc[index.row(), index.column()] = value
+
+            index_num = index.column() + 1
+            vaccine = get_vaccine(vaccine_list[index.row()])
+            vaccine += str(index_num)
+
+            insert_vaccine_query = QSqlQuery()
+            insert_vaccine_query.prepare(
+                """
+                UPDATE vaccines
+                SET """ + vaccine + """ = ?
+                WHERE patientID = ?
+                """
+            )
+
+            insert_vaccine_query.addBindValue(value)
+            insert_vaccine_query.addBindValue(self.id)
+            insert_vaccine_query.exec()
+
             return True
         return False
 
@@ -129,7 +160,7 @@ class myApp(QWidget):
             data = pd.DataFrame(
                 vaccine_data, columns=range(1, 6), index=vaccine_list)
 
-            self.vaccine_model = PandasModel(data)
+            self.vaccine_model = PandasModel(data, id_index)
             self.vaccinationView.setModel(self.vaccine_model)
             self.vaccine_model.setHeaderData(
                 0, Qt.Orientation.Horizontal, "ID")
@@ -144,26 +175,20 @@ class myApp(QWidget):
                 """
                 SELECT *
                 FROM vaccines
+                WHERE patientID = ?
                 """
             )
 
+            retrieve_vaccine_query.addBindValue(id_index)
             retrieve_vaccine_query.exec()
             retrieve_vaccine_query.first()
 
-            vaccine = self.vaccineDropdown.currentText()
-            if vaccine == 'Hepatite B' or vaccine == 'Hepatite A':
-                vaccine = vaccine[:-2] + vaccine[-1]
-            elif vaccine == 'Prevnar 13' or vaccine == 'Typhim VI':
-                vaccine = vaccine[:-3] + vaccine[-2:]
-            elif vaccine == 'Papilloma virus':
-                vaccine = vaccine[:-6] + vaccine[-5].upper() + vaccine[-4:]
-
-            vaccine = vaccine[0].lower() + vaccine[1:]
+            vaccine = get_vaccine(self.vaccineDropdown.currentText())
             for i in range(1, 6):
-                if retrieve_vaccine_query.value(vaccine + '_' + str(i)) == "":
+                if retrieve_vaccine_query.value(vaccine + str(i)) == "":
                     break
 
-            vaccine += '_' + str(i)
+            vaccine += str(i)
             insert_vaccine_query = QSqlQuery()
             insert_vaccine_query.prepare(
                 """
@@ -179,7 +204,7 @@ class myApp(QWidget):
             insert_vaccine_query.exec()
 
             self.show_vaccination_table()
-            self.refresh_table(row_index)
+            # self.refresh_table(row_index)
 
     def add_patient(self) -> None:
         if self.firstNameInput.text() == '':
