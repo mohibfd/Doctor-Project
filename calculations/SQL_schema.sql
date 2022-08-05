@@ -76,7 +76,7 @@ TABLE vaccines (
 TABLE examinations (
     examinationID INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
     date DATE,
-    age INT,
+    age VARCHAR(3),
     height INT,
     weight INT,
     headCircumference INT,

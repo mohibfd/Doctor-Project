@@ -399,6 +399,12 @@ class myApp(QWidget):
             dob = datetime.datetime(year, month, day)
             date = self.examinationDateInput.date().toPyDate()
             age = relativedelta(date, dob).years
+            if age < 3:
+                years_as_months = age * 12
+                age = years_as_months + relativedelta(date, dob).months
+                age = str(age) + " M"
+            else:
+                age = str(age)
 
             insert_examination_query.addBindValue(
                 self.examinationDateInput.date())
