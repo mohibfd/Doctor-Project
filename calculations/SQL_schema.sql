@@ -71,3 +71,23 @@ TABLE vaccines (
   	patientID INT,
     FOREIGN KEY (patientID) REFERENCES patients(id)
 )
+
+
+TABLE examinations (
+    examinationID INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE NOT NULL,
+    date DATE,
+    age INT,
+    height INT,
+    weight INT,
+    headCircumference INT,
+    bloodPressure VARCHAR(10),
+    allergy VARCHAR(300),
+    history VARCHAR(300),
+    physicalExam VARCHAR(300),
+    diagnostic VARCHAR(300),
+    treatment VARCHAR(300),
+    laboratory VARCHAR(300),
+    radiology VARCHAR(300),
+   	patientID INT,
+    FOREIGN KEY (patientID) REFERENCES patients(id)
+)

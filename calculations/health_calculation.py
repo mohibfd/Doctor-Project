@@ -1,14 +1,23 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QWidget, QMessageBox
-from PyQt6 import uic, QtCore
-from PyQt6.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel
+from PyQt6 import uic
+from PyQt6.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QDate
 from PyQt6.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
 import pandas as pd
-
+import datetime
+from dateutil.relativedelta import relativedelta
 from bmi_calculations import bmi_calc, under3_weight_calc, under3_height_calc, male_height_weight_calc, female_height_weight_calc
 
 vaccine_list = [
     "Hepatite B", "Penta", "Tetra", "Prevnar 13", "Rota", "Meningo", "Priorix", "Varilix", "Hepatite A", "Typhim VI", "Papilloma virus", "Autres"
+]
+
+examination_list = [
+    "date", "age", "height", "weight", "headCircumference", "bloodPressure", "allergy", "history", "physicalExam", "diagnostic", "treatment", "laboratory", "radiology"
+]
+
+visual_examination_list = [
+    "Date", "Age", "Height", "Weight", "H C", "B P", "Allergy", "History", "Physical Exam", "Diagnostic", "Treatment", "Laboratory", "Radiology"
 ]
 
 
@@ -42,6 +51,20 @@ class PandasModel(QAbstractTableModel):
                 value = self._data.iloc[index.row(), index.column()]
                 return str(value)
 
+    def headerData(self, section, orientation, role):
+        # section is the index of the column/row.
+        if role == Qt.ItemDataRole.DisplayRole:
+            if orientation == Qt.Orientation.Horizontal:
+                return str(self._data.columns[section])
+
+            if orientation == Qt.Orientation.Vertical:
+                return str(self._data.index[section])
+
+    def flags(self, index):
+        return Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsEditable
+
+
+class VaccineModel(PandasModel):
     def setData(self, index, value, role):
         if role == Qt.ItemDataRole.EditRole:
             self._data.iloc[index.row(), index.column()] = value
@@ -66,17 +89,49 @@ class PandasModel(QAbstractTableModel):
             return True
         return False
 
-    def headerData(self, section, orientation, role):
-        # section is the index of the column/row.
-        if role == Qt.ItemDataRole.DisplayRole:
-            if orientation == Qt.Orientation.Horizontal:
-                return str(self._data.columns[section])
 
-            if orientation == Qt.Orientation.Vertical:
-                return str(self._data.index[section])
+class ExaminationModel(PandasModel):
+    def setData(self, index, value, role):
+        if role == Qt.ItemDataRole.EditRole:
+            index_row = index.row()
+            index_column = index.column()
+            self._data.iloc[index_row, index_column] = value
 
-    def flags(self, index):
-        return Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsEditable
+            data = examination_list[index_column]
+
+            get_examinations_query = QSqlQuery()
+            get_examinations_query.prepare(
+                """
+                SELECT examinationID
+                FROM examinations
+                WHERE patientID = ?
+                """
+            )
+            get_examinations_query.addBindValue(self.id)
+            get_examinations_query.exec()
+            count = 0
+            examination_id = 0
+            while get_examinations_query.next():
+                if count == index_row:
+                    examination_id = get_examinations_query.value(0)
+                    break
+                count += 1
+
+            insert_examinations_query = QSqlQuery()
+            insert_examinations_query.prepare(
+                """
+                UPDATE examinations
+                SET """ + data + """ = ?
+                WHERE examinationID = ?
+                """
+            )
+
+            insert_examinations_query.addBindValue(value)
+            insert_examinations_query.addBindValue(examination_id)
+            insert_examinations_query.exec()
+
+            return True
+        return False
 
 
 class myApp(QWidget):
@@ -88,9 +143,8 @@ class myApp(QWidget):
         for i in vaccine_list:
             self.vaccineDropdown.addItem(i)
 
-        self.vaccineDateInput.setDateTime(QtCore.QDateTime.currentDateTime())
-        self.examinationDateInput.setDateTime(
-            QtCore.QDateTime.currentDateTime())
+        self.vaccineDateInput.setDate(QDate.currentDate())
+        self.examinationDateInput.setDate(QDate.currentDate())
 
         self.bmiButton.clicked.connect(self.calculate_bmi)
         self.weightAgeButton.clicked.connect(self.calculate_age_weight)
@@ -99,6 +153,8 @@ class myApp(QWidget):
         self.deleteButton.clicked.connect(self.delete_from_database)
         self.vaccinationButton.clicked.connect(self.show_vaccination_table)
         self.addVaccineButton.clicked.connect(self.add_vaccine)
+        self.examinationButton.clicked.connect(self.show_examination_table)
+        self.addExaminationButton.clicked.connect(self.add_examination)
 
         self.vaccine_start_index = 1
 
@@ -133,6 +189,7 @@ class myApp(QWidget):
         self.view.selectRow(selectedRow)
 
     def show_vaccination_table(self) -> None:
+
         index = self.get_row_index()
         if index:
             id_index = self.model.data(index)
@@ -160,10 +217,14 @@ class myApp(QWidget):
             data = pd.DataFrame(
                 vaccine_data, columns=range(1, 6), index=vaccine_list)
 
-            self.vaccine_model = PandasModel(data, id_index)
+            self.vaccine_model = VaccineModel(data, id_index)
             self.vaccinationView.setModel(self.vaccine_model)
             self.vaccine_model.setHeaderData(
                 0, Qt.Orientation.Horizontal, "ID")
+
+            self.vaccinationView.verticalHeader().setDefaultSectionSize(30)
+            self.vaccinationView.horizontalHeader().setDefaultSectionSize(88)
+            # self.vaccinationView.resizeColumnsToContents()
 
     def add_vaccine(self) -> None:
         index = self.get_row_index()
@@ -249,7 +310,6 @@ class myApp(QWidget):
             insert_patient_query.addBindValue(self.lastNameInput.text())
             insert_patient_query.addBindValue(self.DOBInput.date())
             insert_patient_query.exec()
-            insert_patient_query.next()
 
             select_id_query = QSqlQuery()
             select_id_query.exec("SELECT last_insert_rowid()")
@@ -268,6 +328,105 @@ class myApp(QWidget):
 
             self.refresh_table(row_index)
             self.show_vaccination_table()
+
+    def show_examination_table(self) -> None:
+        index = self.get_row_index()
+        if index:
+            id_index = self.model.data(index)
+            query = QSqlQuery()
+            query.prepare(
+                """
+                SELECT *
+                FROM examinations
+                WHERE patientID = ?
+                """
+            )
+            query.addBindValue(id_index)
+            query.exec()
+            rows_count = 1
+            data = []
+            while query.next():
+                row_data = []
+                for i in examination_list:
+                    row_data.append(query.value(i))
+
+                data.append(row_data)
+                rows_count += 1
+
+            data = pd.DataFrame(
+                data, columns=visual_examination_list, index=range(1, rows_count))
+
+            self.examination_model = ExaminationModel(data, id_index)
+            self.vaccinationView.setModel(self.examination_model)
+            self.vaccinationView.resizeColumnsToContents()
+            self.vaccinationView.verticalHeader().setDefaultSectionSize(50)
+            column_width = 200
+            for i in range(6, 13):
+                self.vaccinationView.setColumnWidth(i, column_width)
+
+    def add_examination(self) -> None:
+        index = self.get_row_index()
+        if index:
+            id_index = self.model.data(index)
+
+            age_query = QSqlQuery()
+            age_query.prepare(
+                """
+                SELECT DOB
+                FROM patients
+                WHERE id = ?
+                """
+            )
+            age_query.addBindValue(id_index)
+            age_query.exec()
+
+            age_query.first()
+            age_query = age_query.value(0)
+
+            insert_examination_query = QSqlQuery()
+            insert_examination_query.prepare(
+                """
+                INSERT INTO examinations(
+                date, age, height, weight, headCircumference, bloodPressure, allergy, history, physicalExam,
+                diagnostic, treatment, laboratory, radiology, patientID)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """
+            )
+
+            year = int(age_query[:4])
+            month = int(age_query[5:7])
+            day = int(age_query[8:10])
+            dob = datetime.datetime(year, month, day)
+            date = self.examinationDateInput.date().toPyDate()
+            age = relativedelta(date, dob).years
+
+            insert_examination_query.addBindValue(
+                self.examinationDateInput.date())
+            insert_examination_query.addBindValue(age)
+            insert_examination_query.addBindValue(self.heightInput.text())
+            insert_examination_query.addBindValue(self.weightInput.text())
+            insert_examination_query.addBindValue(
+                self.headCircumferenceInput.text())
+            insert_examination_query.addBindValue(
+                self.bloodPressureInput.text())
+            insert_examination_query.addBindValue(
+                self.allergyInput.toPlainText())
+            insert_examination_query.addBindValue(
+                self.historyInput.toPlainText())
+            insert_examination_query.addBindValue(
+                self.physicalExamInput.toPlainText())
+            insert_examination_query.addBindValue(
+                self.diagnosticInput.toPlainText())
+            insert_examination_query.addBindValue(
+                self.treatmentInput.toPlainText())
+            insert_examination_query.addBindValue(
+                self.laboratoryInput.toPlainText())
+            insert_examination_query.addBindValue(
+                self.radiologyInput.toPlainText())
+            insert_examination_query.addBindValue(id_index)
+            insert_examination_query.exec()
+
+            self.show_examination_table()
 
     def delete_from_database(self) -> None:
         indices = self.view.selectionModel().selectedRows()
