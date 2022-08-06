@@ -155,7 +155,8 @@ class myApp(QWidget):
         self.weightAgeButton.clicked.connect(self.calculate_age_weight)
         self.heightAgeButton.clicked.connect(self.calculate_age_height)
         self.addButton.clicked.connect(self.add_patient)
-        self.deleteButton.clicked.connect(self.delete_from_database)
+        self.deletePatientButton.clicked.connect(self.delete_patient)
+        self.deleteExaminationButton.clicked.connect(self.delete_examination)
         self.vaccinationButton.clicked.connect(self.show_vaccination_table)
         self.addVaccineButton.clicked.connect(self.add_vaccine)
         self.examinationButton.clicked.connect(self.show_examination_table)
@@ -457,7 +458,7 @@ class myApp(QWidget):
 
             self.show_examination_table()
 
-    def delete_from_database(self) -> None:
+    def delete_patient(self) -> None:
         indices = self.view.selectionModel().selectedRows()
         if len(indices) == 0:
             QMessageBox.warning(
@@ -466,16 +467,8 @@ class myApp(QWidget):
                 "Please select a patient",
             )
         else:
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Icon.Critical)
-            msgBox.setText(
-                "Are you sure you would like to delete this patient?")
-            msgBox.setStandardButtons(
-                QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Yes)
-            msgBox.setDefaultButton(QMessageBox.StandardButton.Cancel)
-
-            returnValue = msgBox.exec()
-            if returnValue == QMessageBox.StandardButton.Yes:
+            response = self.deletion_warning('patient', len(indices))
+            if response == QMessageBox.StandardButton.Yes:
                 for index in sorted(indices):
                     self.model.removeRow(index.row())
 
@@ -483,6 +476,49 @@ class myApp(QWidget):
                 empty_data = pd.DataFrame()
                 empty_table = EmptyModel(empty_data, None)
                 self.vaccinationView.setModel(empty_table)
+
+    def delete_examination(self) -> None:
+        indices = self.vaccinationView.selectionModel().selectedRows()
+        if len(indices) == 0:
+            QMessageBox.warning(
+                None,
+                "",
+                "Please select an examination",
+            )
+        else:
+            response = self.deletion_warning('examination', len(indices))
+            if response == QMessageBox.StandardButton.Yes:
+                for i in indices:
+                    id_index = i.data()
+
+                    deletion_query = QSqlQuery()
+                    deletion_query.prepare(
+                        """
+                        DELETE
+                        FROM examinations
+                        WHERE examinationID = ?
+                        """
+                    )
+                    deletion_query.addBindValue(id_index)
+                    deletion_query.exec()
+
+                self.show_examination_table()
+
+    def deletion_warning(self, message, message_count) -> QMessageBox.StandardButton:
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Icon.Critical)
+        if message_count == 1:
+            msgBox.setText(
+                "Are you sure you would like to delete this {}?".format(message))
+        else:
+            msgBox.setText(
+                "Are you sure you would like to delete these {} {}s?".format(message_count, message))
+        msgBox.setStandardButtons(
+            QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Yes)
+        msgBox.setDefaultButton(QMessageBox.StandardButton.Cancel)
+
+        returnValue = msgBox.exec()
+        return returnValue
 
     def get_row_index(self) -> int:
         try:

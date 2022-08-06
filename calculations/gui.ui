@@ -413,13 +413,16 @@
      <height>241</height>
     </rect>
    </property>
+   <property name="layoutDirection">
+    <enum>Qt::LeftToRight</enum>
+   </property>
   </widget>
-  <widget class="QPushButton" name="deleteButton">
+  <widget class="QPushButton" name="deletePatientButton">
    <property name="geometry">
     <rect>
      <x>830</x>
-     <y>130</y>
-     <width>121</width>
+     <y>100</y>
+     <width>131</width>
      <height>31</height>
     </rect>
    </property>
@@ -431,8 +434,8 @@
    <property name="geometry">
     <rect>
      <x>830</x>
-     <y>180</y>
-     <width>121</width>
+     <y>200</y>
+     <width>131</width>
      <height>31</height>
     </rect>
    </property>
@@ -454,7 +457,7 @@
    <property name="geometry">
     <rect>
      <x>870</x>
-     <y>50</y>
+     <y>40</y>
      <width>51</width>
      <height>16</height>
     </rect>
@@ -467,8 +470,8 @@
    <property name="geometry">
     <rect>
      <x>830</x>
-     <y>70</y>
-     <width>121</width>
+     <y>60</y>
+     <width>131</width>
      <height>22</height>
     </rect>
    </property>
@@ -877,13 +880,26 @@
    <property name="geometry">
     <rect>
      <x>830</x>
-     <y>230</y>
-     <width>121</width>
+     <y>250</y>
+     <width>131</width>
      <height>31</height>
     </rect>
    </property>
    <property name="text">
     <string>Examination Table</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="deleteExaminationButton">
+   <property name="geometry">
+    <rect>
+     <x>830</x>
+     <y>150</y>
+     <width>131</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Delete Examination</string>
    </property>
   </widget>
  </widget>
