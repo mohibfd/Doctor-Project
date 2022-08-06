@@ -13,11 +13,11 @@ vaccine_list = [
 ]
 
 examination_list = [
-    "date", "age", "height", "weight", "headCircumference", "bloodPressure", "allergy", "history", "physicalExam", "diagnostic", "treatment", "laboratory", "radiology"
+    "examinationID", "date", "age", "height", "weight", "headCircumference", "bloodPressure", "allergy", "history", "physicalExam", "diagnostic", "treatment", "laboratory", "radiology"
 ]
 
 visual_examination_list = [
-    "Date", "Age", "Height", "Weight", "H C", "B P", "Allergy", "History", "Physical Exam", "Diagnostic", "Treatment", "Laboratory", "Radiology"
+    "ID", "Date", "Age", "Height", "Weight", "H C", "B P", "Allergy", "History", "Physical Exam", "Diagnostic", "Treatment", "Laboratory", "Radiology"
 ]
 
 
@@ -165,6 +165,7 @@ class myApp(QWidget):
         self.vaccine_start_index = 1
 
         self.initialise_table()
+        self.viewingExaminations = False
 
     def initialise_table(self) -> None:
         self.model = QSqlTableModel(self)
@@ -198,7 +199,6 @@ class myApp(QWidget):
         self.view.selectRow(selectedRow)
 
     def show_vaccination_table(self) -> None:
-
         index = self.get_row_index()
         if index:
             id_index = self.model.data(index)
@@ -231,14 +231,16 @@ class myApp(QWidget):
             self.vaccine_model.setHeaderData(
                 0, Qt.Orientation.Horizontal, "ID")
 
+            self.vaccinationView.showColumn(0)
             self.vaccinationView.verticalHeader().setDefaultSectionSize(30)
             self.vaccinationView.horizontalHeader().setDefaultSectionSize(130)
+
+            self.viewingExaminations = False
 
     def add_vaccine(self) -> None:
         index = self.get_row_index()
         if index:
             id_index = self.model.data(index)
-            row_index = index.row()
             retrieve_vaccine_query = QSqlQuery()
             retrieve_vaccine_query.prepare(
                 """
@@ -288,53 +290,55 @@ class myApp(QWidget):
                     "",
                     "Please enter a first name",
                 )
+            return
+
         elif self.lastNameInput.text() == '':
             QMessageBox.warning(
                 None,
                 "",
                 "Please enter a last name",
             )
+            return
 
-        else:
-            row_count_query = QSqlQuery()
-            row_count_query.exec("SELECT COUNT(*) FROM patients")
-            row_count_query.first()
-            row_index = row_count_query.value(0)
+        row_count_query = QSqlQuery()
+        row_count_query.exec("SELECT COUNT(*) FROM patients")
+        row_count_query.first()
+        row_index = row_count_query.value(0)
 
-            insert_patient_query = QSqlQuery()
-            insert_patient_query.prepare(
-                """
-                INSERT INTO patients(
-                    firstName,
-                    lastName,
-                    DOB
-                )
-                VALUES (?, ?, ?)
-                """
+        insert_patient_query = QSqlQuery()
+        insert_patient_query.prepare(
+            """
+            INSERT INTO patients(
+                firstName,
+                lastName,
+                DOB
             )
+            VALUES (?, ?, ?)
+            """
+        )
 
-            insert_patient_query.addBindValue(self.firstNameInput.text())
-            insert_patient_query.addBindValue(self.lastNameInput.text())
-            insert_patient_query.addBindValue(self.DOBInput.date())
-            insert_patient_query.exec()
+        insert_patient_query.addBindValue(self.firstNameInput.text())
+        insert_patient_query.addBindValue(self.lastNameInput.text())
+        insert_patient_query.addBindValue(self.DOBInput.date())
+        insert_patient_query.exec()
 
-            select_id_query = QSqlQuery()
-            select_id_query.exec("SELECT last_insert_rowid()")
-            select_id_query.first()
-            foreign_id = select_id_query.value(0)
+        select_id_query = QSqlQuery()
+        select_id_query.exec("SELECT last_insert_rowid()")
+        select_id_query.first()
+        foreign_id = select_id_query.value(0)
 
-            insert_vaccines_query = QSqlQuery()
-            insert_vaccines_query.prepare(
-                """
-                INSERT INTO vaccines(patientID)
-                VALUES (?)
-                """
-            )
-            insert_vaccines_query.addBindValue(foreign_id)
-            insert_vaccines_query.exec()
+        insert_vaccines_query = QSqlQuery()
+        insert_vaccines_query.prepare(
+            """
+            INSERT INTO vaccines(patientID)
+            VALUES (?)
+            """
+        )
+        insert_vaccines_query.addBindValue(foreign_id)
+        insert_vaccines_query.exec()
 
-            self.refresh_table(row_index)
-            self.show_vaccination_table()
+        self.refresh_table(row_index)
+        self.show_vaccination_table()
 
     def show_examination_table(self) -> None:
         index = self.get_row_index()
@@ -375,6 +379,9 @@ class myApp(QWidget):
                     self.vaccinationView.setColumnWidth(i, 130)
                 else:
                     self.vaccinationView.setColumnWidth(i, column_width)
+
+            self.vaccinationView.hideColumn(0)
+            self.viewingExaminations = True
 
     def add_examination(self) -> None:
         index = self.get_row_index()
@@ -501,6 +508,14 @@ class myApp(QWidget):
                 self.vaccinationView.setModel(empty_table)
 
     def delete_examination(self) -> None:
+        if self.viewingExaminations == False:
+            QMessageBox.warning(
+                None,
+                "",
+                "Please open a patient\'s examination",
+            )
+            return
+
         indices = self.vaccinationView.selectionModel().selectedRows()
         if len(indices) == 0:
             QMessageBox.warning(
@@ -508,24 +523,25 @@ class myApp(QWidget):
                 "",
                 "Please select an examination",
             )
-        else:
-            response = self.deletion_warning('examination', len(indices))
-            if response == QMessageBox.StandardButton.Yes:
-                for i in indices:
-                    id_index = i.data()
+            return
 
-                    deletion_query = QSqlQuery()
-                    deletion_query.prepare(
-                        """
-                        DELETE
-                        FROM examinations
-                        WHERE examinationID = ?
-                        """
-                    )
-                    deletion_query.addBindValue(id_index)
-                    deletion_query.exec()
+        response = self.deletion_warning('examination', len(indices))
+        if response == QMessageBox.StandardButton.Yes:
+            for i in indices:
+                id_index = i.data()
 
-                self.show_examination_table()
+                deletion_query = QSqlQuery()
+                deletion_query.prepare(
+                    """
+                    DELETE
+                    FROM examinations
+                    WHERE examinationID = ?
+                    """
+                )
+                deletion_query.addBindValue(id_index)
+                deletion_query.exec()
+
+            self.show_examination_table()
 
     def deletion_warning(self, message, message_count) -> QMessageBox.StandardButton:
         msgBox = QMessageBox()
