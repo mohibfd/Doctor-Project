@@ -373,9 +373,9 @@ class myApp(QWidget):
             self.vaccinationView.verticalHeader().setDefaultSectionSize(50)
 
             column_width = 200
-            self.vaccinationView.setColumnWidth(6, 100)
-            for i in range(7, 13):
-                if i == 9 or i == 12:
+            self.vaccinationView.setColumnWidth(7, 100)
+            for i in range(8, 14):
+                if i == 10 or i == 13:
                     self.vaccinationView.setColumnWidth(i, 130)
                 else:
                     self.vaccinationView.setColumnWidth(i, column_width)
