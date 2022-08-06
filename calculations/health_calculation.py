@@ -134,6 +134,11 @@ class ExaminationModel(PandasModel):
         return False
 
 
+class EmptyModel(PandasModel):
+    def headerData(self, section, orientation, role):
+        return
+
+
 class myApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -173,6 +178,9 @@ class myApp(QWidget):
         self.view.setModel(self.model)
         self.view.resizeColumnsToContents()
         self.view.hideColumn(0)
+        self.view.setColumnWidth(1, 115)
+        self.view.setColumnWidth(2, 115)
+        # self.view.setTextAlignment(Qt.AlignHCenter)
 
         filter_proxy_model = QSortFilterProxyModel()
         filter_proxy_model.setSourceModel(self.model)
@@ -223,8 +231,7 @@ class myApp(QWidget):
                 0, Qt.Orientation.Horizontal, "ID")
 
             self.vaccinationView.verticalHeader().setDefaultSectionSize(30)
-            self.vaccinationView.horizontalHeader().setDefaultSectionSize(88)
-            # self.vaccinationView.resizeColumnsToContents()
+            self.vaccinationView.horizontalHeader().setDefaultSectionSize(130)
 
     def add_vaccine(self) -> None:
         index = self.get_row_index()
@@ -265,7 +272,6 @@ class myApp(QWidget):
             insert_vaccine_query.exec()
 
             self.show_vaccination_table()
-            # self.refresh_table(row_index)
 
     def add_patient(self) -> None:
         if self.firstNameInput.text() == '':
@@ -360,9 +366,14 @@ class myApp(QWidget):
             self.vaccinationView.setModel(self.examination_model)
             self.vaccinationView.resizeColumnsToContents()
             self.vaccinationView.verticalHeader().setDefaultSectionSize(50)
+
             column_width = 200
-            for i in range(6, 13):
-                self.vaccinationView.setColumnWidth(i, column_width)
+            self.vaccinationView.setColumnWidth(6, 100)
+            for i in range(7, 13):
+                if i == 9 or i == 12:
+                    self.vaccinationView.setColumnWidth(i, 130)
+                else:
+                    self.vaccinationView.setColumnWidth(i, column_width)
 
     def add_examination(self) -> None:
         index = self.get_row_index()
@@ -432,6 +443,18 @@ class myApp(QWidget):
             insert_examination_query.addBindValue(id_index)
             insert_examination_query.exec()
 
+            self.heightInput.setText("")
+            self.weightInput.setText("")
+            self.headCircumferenceInput.setText("")
+            self.bloodPressureInput.setText("")
+            self.allergyInput.setPlainText("")
+            self.historyInput.setPlainText("")
+            self.physicalExamInput.setPlainText("")
+            self.diagnosticInput.setPlainText("")
+            self.treatmentInput.setPlainText("")
+            self.laboratoryInput.setPlainText("")
+            self.radiologyInput.setPlainText("")
+
             self.show_examination_table()
 
     def delete_from_database(self) -> None:
@@ -457,6 +480,9 @@ class myApp(QWidget):
                     self.model.removeRow(index.row())
 
                 self.initialise_table()
+                empty_data = pd.DataFrame()
+                empty_table = EmptyModel(empty_data, None)
+                self.vaccinationView.setModel(empty_table)
 
     def get_row_index(self) -> int:
         try:
