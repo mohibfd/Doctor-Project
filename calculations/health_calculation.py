@@ -179,8 +179,8 @@ class myApp(QWidget):
         self.view.setModel(self.model)
         self.view.resizeColumnsToContents()
         self.view.hideColumn(0)
-        self.view.setColumnWidth(1, 115)
-        self.view.setColumnWidth(2, 115)
+        self.view.setColumnWidth(1, 110)
+        self.view.setColumnWidth(2, 110)
         # self.view.setTextAlignment(Qt.AlignHCenter)
 
         filter_proxy_model = QSortFilterProxyModel()
@@ -470,6 +470,29 @@ class myApp(QWidget):
             response = self.deletion_warning('patient', len(indices))
             if response == QMessageBox.StandardButton.Yes:
                 for index in sorted(indices):
+                    id_index = index.data()
+                    vaccine_deletion_query = QSqlQuery()
+                    vaccine_deletion_query.prepare(
+                        """
+                        DELETE
+                        FROM vaccines
+                        WHERE patientID = ?
+                        """
+                    )
+                    vaccine_deletion_query.addBindValue(id_index)
+                    vaccine_deletion_query.exec()
+
+                    exmination_deletion_query = QSqlQuery()
+                    exmination_deletion_query.prepare(
+                        """
+                        DELETE
+                        FROM examinations
+                        WHERE patientID = ?
+                        """
+                    )
+                    exmination_deletion_query.addBindValue(id_index)
+                    exmination_deletion_query.exec()
+
                     self.model.removeRow(index.row())
 
                 self.initialise_table()
