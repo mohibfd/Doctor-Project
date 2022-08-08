@@ -417,13 +417,13 @@ class myApp(QWidget):
             day = int(age_query[8:10])
             dob = datetime.datetime(year, month, day)
             date = self.examinationDateInput.date().toPyDate()
-            age = relativedelta(date, dob).years
-            if age < 3:
-                years_as_months = age * 12
-                age = years_as_months + relativedelta(date, dob).months
-                age = str(age) + " M"
+            age_years = relativedelta(date, dob).years
+            age_months = relativedelta(date, dob).months
+            age = ""
+            if age_years >= 1:
+                age = "{}Y {}M".format(str(age_years), str(age_months))
             else:
-                age = str(age)
+                age = "{}M".format(str(age_months))
 
             insert_examination_query.addBindValue(
                 self.examinationDateInput.date())
