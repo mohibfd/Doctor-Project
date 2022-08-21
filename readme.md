@@ -1,4 +1,4 @@
-# Run Desktop app o
+# Run Desktop app
 
 ## Install dependencies
 
