@@ -27,8 +27,7 @@ def get_vaccine(vaccine) -> str:
     elif vaccine == 'Prevnar 13' or vaccine == 'Typhim VI':
         vaccine = vaccine[:-3] + vaccine[-2:]
     elif vaccine == 'Papilloma virus':
-        vaccine = vaccine[:-6] + vaccine[-5].upper() + vaccine[-4:]
-
+        vaccine = 'papiloma' + vaccine[-5].upper() + vaccine[-4:]
     vaccine = vaccine[0].lower() + vaccine[1:]
     return vaccine + '_'
 
