@@ -499,9 +499,19 @@ class myApp(QWidget):
                     exmination_deletion_query.addBindValue(id_index)
                     exmination_deletion_query.exec()
 
-                    self.model.removeRow(index.row())
+                    patient_deletion_query = QSqlQuery()
+                    patient_deletion_query.prepare(
+                        """
+                        DELETE
+                        FROM patients
+                        WHERE id = ?
+                        """
+                    )
+                    patient_deletion_query.addBindValue(id_index)
+                    patient_deletion_query.exec()
 
                 self.initialise_table()
+                self.searchInput.setText("")
                 empty_data = pd.DataFrame()
                 empty_table = EmptyModel(empty_data, None)
                 self.vaccinationView.setModel(empty_table)
