@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QMessageBox
 from PyQt6 import uic
 from PyQt6.QtCore import Qt, QSortFilterProxyModel, QAbstractTableModel, QDate
 from PyQt6.QtSql import QSqlDatabase, QSqlTableModel, QSqlQuery
+from PyQt6.QtCore import QModelIndex
 import pandas as pd
 import datetime
 from dateutil.relativedelta import relativedelta
@@ -181,7 +182,6 @@ class myApp(QWidget):
         self.view.hideColumn(0)
         self.view.setColumnWidth(1, 110)
         self.view.setColumnWidth(2, 110)
-        # self.view.setTextAlignment(Qt.AlignHCenter)
 
         filter_proxy_model = QSortFilterProxyModel()
         filter_proxy_model.setSourceModel(self.model)
@@ -193,14 +193,14 @@ class myApp(QWidget):
         search_field.textChanged.connect(
             filter_proxy_model.setFilterRegularExpression)
 
-    def refresh_table(self, selectedRow: int) -> None:
+    def refresh_table(self, selectedRow: QModelIndex) -> None:
         self.initialise_table()
         self.view.selectRow(selectedRow)
 
     def show_vaccination_table(self) -> None:
         index = self.get_row_index()
         if index:
-            id_index = self.model.data(index)
+            id_index = index.data()
             query = QSqlQuery()
             query.prepare(
                 """
@@ -239,7 +239,7 @@ class myApp(QWidget):
     def add_vaccine(self) -> None:
         index = self.get_row_index()
         if index:
-            id_index = self.model.data(index)
+            id_index = index.data()
             retrieve_vaccine_query = QSqlQuery()
             retrieve_vaccine_query.prepare(
                 """
@@ -342,7 +342,7 @@ class myApp(QWidget):
     def show_examination_table(self) -> None:
         index = self.get_row_index()
         if index:
-            id_index = self.model.data(index)
+            id_index = index.data()
             query = QSqlQuery()
             query.prepare(
                 """
@@ -385,7 +385,7 @@ class myApp(QWidget):
     def add_examination(self) -> None:
         index = self.get_row_index()
         if index:
-            id_index = self.model.data(index)
+            id_index = index.data()
 
             age_query = QSqlQuery()
             age_query.prepare(
@@ -558,7 +558,7 @@ class myApp(QWidget):
         returnValue = msgBox.exec()
         return returnValue
 
-    def get_row_index(self) -> int:
+    def get_row_index(self) -> QModelIndex:
         try:
             index = self.view.selectionModel().selectedRows()[0]
             return index
